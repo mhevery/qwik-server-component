@@ -8,6 +8,7 @@ export interface Stats {
 }
 declare global {
   let timestamp: ((...args: any[]) => number) & Stats;
+  let symbols: Set<string>;
 }
 
 /**
@@ -16,6 +17,10 @@ declare global {
  * Run this code as close to beginning of HTML as possible.
  */
 export async function start() {
+  symbols = new Set();
+  document.addEventListener("qsymbol", (e) =>
+    symbols.add((e as any).detail.symbol)
+  );
   timestamp = function (...args: any[]) {
     const time = new Date().getTime() - timestamp.startStamp;
     if (args.length) {
