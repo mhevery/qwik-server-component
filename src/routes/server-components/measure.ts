@@ -86,10 +86,10 @@ export async function start() {
   const stateScript = await selector('script[type="qwik/json"]');
   const state = JSON.stringify(JSON.parse(stateScript.textContent!));
   log("Size of serialized state:", state.length, "bytes");
-  log("Cold delay:", coldRenderDelay + coldRenderDelay, "ms");
+  log("Cold delay:", coldEventDelay + coldRenderDelay, "ms");
   log(lpad(coldEventDelay), "ms", "download + parse + resume cost");
   log(lpad(coldRenderDelay), "ms", "render cost");
-  log("Warm delay:", warmRenderDelay + warmRenderDelay, "ms");
+  log("Warm delay:", warmEventDelay + warmRenderDelay, "ms");
   log(lpad(warmEventDelay), "ms", "event propagation cost");
   log(lpad(warmRenderDelay), "ms", "render cost");
 
