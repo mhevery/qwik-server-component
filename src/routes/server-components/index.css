@@ -1,0 +1,71 @@
+h1 {
+  font-size: xx-large;
+  text-align: left;
+  margin: 1em 0;
+  padding: 0.3em;
+  background-color: #18b6f6;
+}
+
+.table {
+  max-height: 20vh;
+  overflow: scroll;
+  padding: 0;
+  margin: 5px;
+  border: 3px solid #ac7ef4;
+  border-radius: 5px;
+}
+
+.row {
+  display: flex;
+}
+
+.name {
+  width: 30vw;
+}
+
+.age {
+  width: 5vw;
+  text-align: right;
+}
+
+.location {
+  width: 60vw;
+}
+
+.action {
+  width: 2vw;
+}
+.action > button {
+  padding: 0;
+  margin: 0;
+  background: none;
+}
+
+.name,
+.age,
+.location,
+.action {
+  padding: 0.2em;
+  padding-left: 0.5em;
+}
+
+.header {
+  font-weight: bolder;
+  background-color: #ac7ef4;
+  color: white;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  position: sticky;
+  top: 0;
+}
+
+#consoleLog {
+  color: white;
+  background-color: black;
+  padding: 1em;
+  position: absolute;
+  width: 33em;
+  bottom: 0;
+  right: 0;
+  border: 2px solid white;
+}
