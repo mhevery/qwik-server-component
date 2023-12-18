@@ -1,3 +1,4 @@
+import { Insights } from "@builder.io/qwik-labs";
 import { component$ } from "@builder.io/qwik";
 import {
   QwikCityProvider,
@@ -10,7 +11,6 @@ import "./global.css";
 import { end, start } from "./routes/measure";
 
 const isProd = !(import.meta.env.DEV || false);
-console.log("IMPORT", import.meta);
 
 export default component$(() => {
   /**
@@ -27,6 +27,7 @@ export default component$(() => {
         <script dangerouslySetInnerHTML={`(${start})()`} />
         <link rel="manifest" href="/manifest.json" />
         <RouterHead />
+        <Insights publicApiKey={import.meta.env.PUBLIC_QWIK_INSIGHTS_KEY} />
       </head>
       <body lang="en">
         <RouterOutlet />
