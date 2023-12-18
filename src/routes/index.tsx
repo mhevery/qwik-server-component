@@ -90,8 +90,10 @@ export const InteractionTest = component$<{ id: string }>(({ id }) => {
       <button
         id={"interaction-button-" + id}
         disabled={show.value}
-        onClick$={(e) => {
-          "detail" in e && typeof e.detail === "function" && e.detail();
+        onClick$={(e: MouseEvent) => {
+          "detail" in e &&
+            typeof e.detail === "function" &&
+            (e as unknown as { detail: Function }).detail();
           show.value = true;
         }}
       >
