@@ -7,7 +7,10 @@ import {
 import { RouterHead } from "./components/router-head/router-head";
 
 import "./global.css";
-import { end, start } from "./routes/server-components/measure";
+import { end, start } from "./routes/measure";
+
+const isProd = !(import.meta.env.DEV || false);
+console.log("IMPORT", import.meta);
 
 export default component$(() => {
   /**
@@ -20,8 +23,8 @@ export default component$(() => {
   return (
     <QwikCityProvider>
       <head>
-        <script dangerouslySetInnerHTML={`(${start})()`} />
         <meta charSet="utf-8" />
+        <script dangerouslySetInnerHTML={`(${start})()`} />
         <link rel="manifest" href="/manifest.json" />
         <RouterHead />
       </head>
@@ -29,6 +32,12 @@ export default component$(() => {
         <RouterOutlet />
         <ServiceWorkerRegister />
         <script dangerouslySetInnerHTML={`(${end})()`} />
+        {isProd && (
+          <script type="module">
+            import from "/build/q-b8680498.js"; import from
+            "/build/q-f226d786.js";
+          </script>
+        )}
       </body>
     </QwikCityProvider>
   );

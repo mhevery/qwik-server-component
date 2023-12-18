@@ -1,112 +1,186 @@
-import { component$ } from '@builder.io/qwik';
-import type { DocumentHead } from '@builder.io/qwik-city';
+import {
+  component$,
+  useComputed$,
+  useSignal,
+  useStyles$,
+} from "@builder.io/qwik";
+import { routeLoader$ } from "@builder.io/qwik-city";
+import STYLES from "./index.css?inline";
 
-import Counter from '~/components/starter/counter/counter';
-import Hero from '~/components/starter/hero/hero';
-import Infobox from '~/components/starter/infobox/infobox';
-import Starter from '~/components/starter/next-steps/next-steps';
+interface Person {
+  id: string;
+  name: string;
+  age: number;
+  location: string;
+}
+
+export const useIsDynamic = routeLoader$(({ url }) => {
+  return (url.searchParams.get("dynamic") || "false") == "true";
+});
+
+export const usePeople = routeLoader$(({ url }) => {
+  const size = Number(url.searchParams.get("size") || "100");
+  const people: Person[] = [];
+  for (let i = 0; i < size; i++) {
+    people.push({
+      id: String(i),
+      name: randomWord() + " " + randomWord() + " " + randomWord(),
+      age: Math.round(Math.random() * 100),
+      location: randomWord() + randomWord(),
+    });
+  }
+  return people;
+});
 
 export default component$(() => {
   return (
-    <>
-      <Hero />
-      <Starter />
-
-      <div role="presentation" class="ellipsis"></div>
-      <div role="presentation" class="ellipsis ellipsis-purple"></div>
-
-      <div class="container container-center container-spacing-xl">
-        <h3>
-          You can <span class="highlight">count</span>
-          <br /> on me
-        </h3>
-        <Counter />
-      </div>
-
-      <div class="container container-flex">
-        <Infobox>
-          <div q:slot="title" class="icon icon-cli">
-            CLI Commands
-          </div>
-          <>
-            <p>
-              <code>npm run dev</code>
-              <br />
-              Starts the development server and watches for changes
-            </p>
-            <p>
-              <code>npm run preview</code>
-              <br />
-              Creates production build and starts a server to preview it
-            </p>
-            <p>
-              <code>npm run build</code>
-              <br />
-              Creates production build
-            </p>
-            <p>
-              <code>npm run qwik add</code>
-              <br />
-              Runs the qwik CLI to add integrations
-            </p>
-          </>
-        </Infobox>
-
-        <div>
-          <Infobox>
-            <div q:slot="title" class="icon icon-apps">
-              Example Apps
-            </div>
-            <p>
-              Have a look at the <a href="/demo/flower">Flower App</a> or the{' '}
-              <a href="/demo/todolist">Todo App</a>.
-            </p>
-          </Infobox>
-
-          <Infobox>
-            <div q:slot="title" class="icon icon-community">
-              Community
-            </div>
-            <ul>
-              <li>
-                <span>Questions or just want to say hi? </span>
-                <a href="https://qwik.builder.io/chat" target="_blank">
-                  Chat on discord!
-                </a>
-              </li>
-              <li>
-                <span>Follow </span>
-                <a href="https://twitter.com/QwikDev" target="_blank">
-                  @QwikDev
-                </a>
-                <span> on Twitter</span>
-              </li>
-              <li>
-                <span>Open issues and contribute on </span>
-                <a href="https://github.com/BuilderIO/qwik" target="_blank">
-                  GitHub
-                </a>
-              </li>
-              <li>
-                <span>Watch </span>
-                <a href="https://qwik.builder.io/media/" target="_blank">
-                  Presentations, Podcasts, Videos, etc.
-                </a>
-              </li>
-            </ul>
-          </Infobox>
-        </div>
-      </div>
-    </>
+    <div>
+      <p>
+        This is a test of how long it takes Qwik to process first interaction.
+        The test tries to click on the two buttons as eagerly as possible and
+        measures the amount of time before the click handler runs and UI gets
+        updated. The second button is identical test, but shows difference
+        between cold start (paused) vs warm start (resumed). The difference
+        between the first and second test is the cost of resuming the state and
+        parsing the Qwik source for the first time.
+      </p>
+      <p>Try these combinations:</p>
+      <table cellPadding={10}>
+        <tbody>
+          <tr>
+            <th></th>
+            <th>SMALL</th>
+            <th>LARGE</th>
+          </tr>
+          <tr>
+            <th>STATIC</th>
+            <td>
+              <a href="?dynamic=false&size=100">static-small</a>
+            </td>
+            <td>
+              <a href="?dynamic=false&size=10000">static-large</a>
+            </td>
+          </tr>
+          <tr>
+            <th>DYNAMIC</th>
+            <td>
+              <a href="?dynamic=true&size=100">dynamic-small</a>
+            </td>
+            <td>
+              <a href="?dynamic=true&size=10000">dynamic-small</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <h1>Table</h1>
+      <TableDemo />
+      <div></div>
+      <h1>Test Footer</h1>
+      <InteractionTest id="1" />
+      <InteractionTest id="2" />
+      <pre id="consoleLog" />
+    </div>
   );
 });
 
-export const head: DocumentHead = {
-  title: 'Welcome to Qwik',
-  meta: [
-    {
-      name: 'description',
-      content: 'Qwik site description',
-    },
-  ],
-};
+export const InteractionTest = component$<{ id: string }>(({ id }) => {
+  const show = useSignal(false);
+  return (
+    <div>
+      <button
+        id={"interaction-button-" + id}
+        disabled={show.value}
+        onClick$={(e) => {
+          "detail" in e && typeof e.detail === "function" && e.detail();
+          show.value = true;
+        }}
+      >
+        Show {id}
+      </button>
+      {show.value && (
+        <span id={"interaction-rendering-" + id}>Client rendered {id}</span>
+      )}
+    </div>
+  );
+});
+
+const WORDS = [
+  "lorem",
+  "ipsum",
+  "plurum",
+  "pas",
+  "or",
+  "athm",
+  "con",
+  "laso",
+  "daum",
+  "fun",
+  "arum",
+  "malu",
+  "var",
+];
+
+function randomWord() {
+  return WORDS[Math.floor(Math.random() * WORDS.length)];
+}
+
+const TableDemo = component$(() => {
+  useStyles$(STYLES);
+  const isDynamic = useIsDynamic();
+  const filter = useSignal("");
+  const people = usePeople();
+  const fPeople = useComputed$(() => {
+    const contains = (text: string | number, fragment: string) =>
+      String(text).toLowerCase().indexOf(fragment) !== -1;
+    return people.value.filter((person: Person) => {
+      const text = filter.value.toLowerCase();
+      return (
+        contains(person.age, text) ||
+        contains(person.name, text) ||
+        contains(person.location, text)
+      );
+    });
+  });
+  return (
+    <div>
+      {isDynamic.value && (
+        <span>
+          <label>Filter:</label> <input bind:value={filter} />{" "}
+        </span>
+      )}
+      showing {fPeople.value.length} of {people.value.length} records.
+      <ul class="table">
+        <li class="row header">
+          <div class="action"></div>
+          <div class="name">Name</div>
+          <div class="age">Age</div>
+          <div class="location">Location</div>
+        </li>
+        {fPeople.value.map((person) => (
+          <Row key={person.id} data={person} />
+        ))}
+      </ul>
+    </div>
+  );
+});
+
+const Row = component$<{
+  data: Person;
+}>(({ data }) => {
+  const isDynamic = useIsDynamic();
+  const locked = useSignal(false);
+  return (
+    <li class="row">
+      <div class="action">
+        {isDynamic.value && (
+          <button onClick$={() => (locked.value = !locked.value)}>
+            {locked.value ? "🔐" : "🔓"}
+          </button>
+        )}
+      </div>
+      <div class="name">{data.name}</div>
+      <div class="age">{data.age}</div>
+      <div class="location">{data.location}</div>
+    </li>
+  );
+});

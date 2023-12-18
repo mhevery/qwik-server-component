@@ -9,6 +9,7 @@ export interface Stats {
 declare global {
   let timestamp: ((...args: any[]) => number) & Stats;
   let symbols: Set<string>;
+  let endOfHtml: number;
 }
 
 /**
@@ -17,6 +18,9 @@ declare global {
  * Run this code as close to beginning of HTML as possible.
  */
 export async function start() {
+  let lastMark = "start";
+  performance.mark(lastMark);
+  const preLog: string[] = [];
   symbols = new Set();
   document.addEventListener("qsymbol", (e) =>
     symbols.add((e as any).detail.symbol)
@@ -42,10 +46,11 @@ export async function start() {
 
   timestamp("Looking for interaction button");
   const button1 = await selector("#interaction-button-1");
-  const coldStamp = timestamp("Found button:" + button1.id);
+  const coldStamp = endOfHtml; // timestamp("Found button:" + button1.id);
   let coldEventDelay = 0;
   let coldRenderDelay = 0;
   let response: Element | null = null;
+  let retryCount = 0;
   do {
     timestamp("Cold start: CLICK");
     button1.dispatchEvent(
@@ -55,13 +60,14 @@ export async function start() {
       })
     );
     try {
-      response = await selector("#interaction-rendering-1", 300);
+      response = await selector("#interaction-rendering-1", 100);
       coldRenderDelay =
         timestamp("UI updated as a response to CLICK") -
         coldEventDelay -
         coldStamp;
     } catch {
       timestamp("retry....");
+      retryCount++;
     }
   } while (!response);
 
@@ -83,11 +89,32 @@ export async function start() {
     timestamp("UI updated as a response to CLICK") - warmEventDelay - warmStamp;
 
   log("------ DONE ------");
-  const stateScript = await selector('script[type="qwik/json"]');
-  const state = JSON.stringify(JSON.parse(stateScript.textContent!));
-  log("Size of serialized state:", state.length, "bytes");
-  log("Cold delay:", coldEventDelay + coldRenderDelay, "ms");
-  log(lpad(coldEventDelay), "ms", "download + parse + resume cost");
+  log("Size of:");
+  const htmlSize = document.firstElementChild!.innerHTML.length;
+  log("    HTML:", Math.round(htmlSize / 1024), "Kb");
+  const stateScript = document.querySelector('script[type="qwik/json"]');
+  if (stateScript) {
+    const state = JSON.stringify(JSON.parse(stateScript.textContent!));
+    log("    serialized state:", Math.round(state.length / 1024), "Kb");
+  } else {
+    // NEXT JS
+    const scripts = document.querySelectorAll("script");
+    let stateSize = 0;
+    scripts.forEach((script) => {
+      if (script.textContent && script.textContent.includes("__next_f")) {
+        stateSize += script.textContent.length;
+      }
+    });
+    log("    serialized state:", Math.round(stateSize / 1024), "Kb");
+  }
+  log(
+    "Cold delay:",
+    coldEventDelay + coldRenderDelay,
+    "ms (",
+    retryCount,
+    " retries)"
+  );
+  log(lpad(coldEventDelay), "ms", "download + parse cost");
   log(lpad(coldRenderDelay), "ms", "render cost");
   log("Warm delay:", warmEventDelay + warmRenderDelay, "ms");
   log(lpad(warmEventDelay), "ms", "event propagation cost");
@@ -95,8 +122,16 @@ export async function start() {
 
   function log(...msg: any[]) {
     console.log(...msg);
+    const mark = msg.join(" ");
+    performance.mark(mark);
+    performance.measure(lastMark, lastMark, mark);
+    lastMark = mark;
     const pre = document.querySelector("#consoleLog");
-    pre && (pre.textContent += msg.join(" ") + "\n");
+    const isHydrated = document.querySelector("#interaction-rendering-2");
+    preLog.push(msg.join(" "));
+    if (pre && isHydrated) {
+      pre.textContent = preLog.join("\n");
+    }
   }
 
   async function selector(selector: string, timeout: number = 5000) {
@@ -123,5 +158,5 @@ export async function start() {
 }
 
 export function end() {
-  timestamp("End of </HTML> received:");
+  endOfHtml = timestamp("End of </HTML> received:");
 }
